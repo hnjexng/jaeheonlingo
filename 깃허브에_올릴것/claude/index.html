@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>재헌링고</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: 한 줄 학습 경로(유닛 노드) + 하단 고정 탭바, 레슨은 전체화면 카드 */
+:root{
+  --bg:#f3f6f1; --card:#ffffff; --ink:#1f2b23; --muted:#66756b; --line:#d9e2d8;
+  --green:#3a8a5c; --green-d:#2a6a45; --green-l:#dcefe2;
+  --red:#d2504a; --red-l:#fbe3e1; --gold:#e3a42a; --gold-l:#fbefd2; --blue:#3f78b5;
+  --display:"Jua","Apple SD Gothic Neo",sans-serif; --body:"Gowun Dodum","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141b16;--card:#1d2620;--ink:#e6eee7;--muted:#9aaa9f;--line:#2f3b33;--green:#4fae78;--green-d:#3a8a5c;--green-l:#22392b;--red:#e5716b;--red-l:#3d2321;--gold:#efb94a;--gold-l:#3a2f17;--blue:#78a6d8;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141b16;--card:#1d2620;--ink:#e6eee7;--muted:#9aaa9f;--line:#2f3b33;--green:#4fae78;--green-d:#3a8a5c;--green-l:#22392b;--red:#e5716b;--red-l:#3d2321;--gold:#efb94a;--gold-l:#3a2f17;--blue:#78a6d8;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:90px}
+h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.wrap{max-width:680px;margin:0 auto}
+.top{display:flex;align-items:center;gap:12px;padding-block:14px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.logo{font-family:var(--display);font-size:26px;color:var(--green);flex:1}
+.stat{display:flex;align-items:center;gap:4px;font-family:var(--display);font-size:17px;font-variant-numeric:tabular-nums}
+.stat.fire{color:var(--gold)} .stat.xp{color:var(--blue)}
+.btn{border:0;border-radius:14px;padding:12px 18px;font-family:var(--display);font-size:17px;background:var(--green);color:#fff;box-shadow:0 4px 0 var(--green-d);transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--green-d)}
+.btn.ghost{background:var(--card);color:var(--ink);box-shadow:0 4px 0 var(--line);border:2px solid var(--line)}
+.btn.red{background:var(--red);box-shadow:0 4px 0 #9c3530}
+.btn:disabled{opacity:.45;pointer-events:none}
+.btn.wide{width:100%}
+.prof{display:flex;gap:12px;align-items:flex-end;margin-block:10px 18px}
+.prof svg{flex:0 0 72px;width:72px;height:72px}
+.bubble{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 14px;position:relative;min-width:0}
+.bubble::before{content:"";position:absolute;left:-9px;bottom:16px;width:14px;height:14px;background:var(--card);border-left:2px solid var(--line);border-bottom:2px solid var(--line);transform:rotate(45deg)}
+.mastery{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;display:grid;gap:8px;margin-bottom:22px}
+.bar{height:14px;border-radius:9px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green);border-radius:9px;transition:width .4s}
+.small{font-size:14px;color:var(--muted)}
+.path{display:grid;gap:26px;justify-items:center;padding-block:10px 20px}
+.node{display:grid;justify-items:center;gap:6px;text-align:center;max-width:260px}
+.node:nth-child(4n+2){transform:translateX(60px)} .node:nth-child(4n){transform:translateX(-60px)}
+.disc{width:78px;height:78px;border-radius:50%;border:0;background:var(--green);color:#fff;font-family:var(--display);font-size:26px;box-shadow:0 6px 0 var(--green-d);position:relative}
+.disc.done{background:var(--gold);box-shadow:0 6px 0 #a87612}
+.disc:active{transform:translateY(4px);box-shadow:0 2px 0 var(--green-d)}
+.ring{position:absolute;inset:-8px;border-radius:50%;background:conic-gradient(var(--green) calc(var(--p)*1%),var(--line) 0);z-index:-1}
+.node b{font-family:var(--display);font-weight:400;font-size:17px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.mode{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px;text-align:left;box-shadow:0 4px 0 var(--line);display:grid;gap:2px}
+.mode b{font-family:var(--display);font-weight:400;font-size:18px}
+.mode .badge{justify-self:start;font-size:13px;background:var(--red-l);color:var(--red);border-radius:8px;padding:0 8px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:2px solid var(--line);display:flex;justify-content:center;gap:4px;padding:8px max(16px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:6}
+.tabbar button{flex:1;max-width:130px;border:2px solid transparent;background:none;border-radius:12px;padding:6px;font-family:var(--display);font-size:15px;color:var(--muted)}
+.tabbar button[aria-current="true"]{border-color:var(--green);color:var(--green);background:var(--green-l)}
+.section-title{margin:26px 0 10px;font-size:22px}
+/* lesson */
+.lesson{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 190px max(16px,env(safe-area-inset-left,0px))}
+.lhead{display:flex;gap:12px;align-items:center;max-width:680px;margin:0 auto 6px}
+.x{border:0;background:none;font-size:26px;color:var(--muted);line-height:1;padding:4px}
+.lhead .bar{flex:1}
+.hearts{font-family:var(--display);color:var(--red);font-size:18px}
+.qtype{font-family:var(--display);color:var(--muted);font-size:15px;letter-spacing:.05em}
+.qtext{font-size:20px;font-weight:700;margin:4px 0 16px}
+.opts{display:grid;gap:10px}
+.opt{text-align:left;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 14px;box-shadow:0 3px 0 var(--line);display:flex;gap:10px;align-items:flex-start}
+.opt .k{flex:0 0 26px;height:26px;border:2px solid var(--line);border-radius:8px;display:grid;place-items:center;font-size:13px;color:var(--muted)}
+.opt.sel{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,var(--card))}
+.opt.right{border-color:var(--green);background:var(--green-l)} .opt.wrong{border-color:var(--red);background:var(--red-l)}
+.opt .why{display:block;font-size:14px;color:var(--muted);margin-top:4px}
+.blank{display:inline-block;min-width:90px;border-bottom:3px solid var(--blue);padding:0 4px;color:var(--blue)}
+.answer-in{width:100%;font:inherit;font-size:18px;padding:12px 14px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{border:2px solid var(--line);background:var(--card);border-radius:12px;padding:6px 12px;box-shadow:0 3px 0 var(--line)}
+.foot{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:2px solid var(--line);padding:14px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:21}
+.foot.ok{background:var(--green-l);border-color:var(--green)} .foot.no{background:var(--red-l);border-color:var(--red)}
+.foot .in{max-width:680px;margin:0 auto;display:grid;gap:10px}
+.fb h3{font-size:22px} .foot.ok h3{color:var(--green)} .foot.no h3{color:var(--red)}
+.fb p{margin:2px 0;font-size:15px}
+textarea{width:100%;min-height:180px;font:inherit;padding:12px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink)}
+.model{background:var(--card);border:2px solid var(--green);border-radius:14px;padding:14px;margin-top:14px;white-space:pre-line}
+.rub{display:grid;gap:8px;margin-top:12px}
+.rub label{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:10px}
+.rub input{width:20px;height:20px;margin-top:3px;accent-color:var(--green)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px}
+.list{display:grid;gap:10px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:480px){.pair{grid-template-columns:1fr}.node:nth-child(4n+2){transform:translateX(36px)}.node:nth-child(4n){transform:translateX(-36px)}}
+.pair div{border-radius:12px;padding:10px;background:var(--bg);min-width:0}
+.pair b{font-family:var(--display);font-weight:400;font-size:17px;display:block}
+.match{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.match .opt{font-size:15px}
+.done-screen{text-align:center;display:grid;gap:14px;justify-items:center;padding-top:30px}
+.big{font-family:var(--display);font-size:40px;color:var(--gold)}
+.tag{display:inline-block;font-size:13px;border-radius:8px;padding:0 8px;background:var(--green-l);color:var(--green)}
+.tag.w{background:var(--red-l);color:var(--red)}
+#toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:12px;opacity:0;transition:opacity .2s;z-index:40;pointer-events:none}
+#toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+.pop{animation:pop .25s}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app"></div>
+<nav class="tabbar" id="tabs"></nav>
+<div id="lesson" class="lesson" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============ 데이터: 필기(사회복지정책론 I~VI) 기반 ============ */
+const UNITS=[
+ {id:1,t:"정책 개요",s:"기능·재분배·분석틀"},
+ {id:2,t:"정책의 가치",s:"평등·자유·효율성"},
+ {id:3,t:"국가 개입의 정당성",s:"공공재·외부효과·역선택"},
+ {id:4,t:"정책 과정",s:"결정모형·쓰레기통·평가"},
+ {id:5,t:"급여",s:"보편/선별·선정기준·급여형태"},
+ {id:6,t:"재원",s:"일반세·목적세·조세비용"}];
+
+const MCQ=[
+{id:"m1",u:1,q:"소득이 많은 사람에게서 적은 사람에게로 소득이 이전되는 재분배는?",o:["수직적 재분배","수평적 재분배","세대간 재분배","단기적 재분배"],a:0,w:["정답. 공공부조·누진세가 대표적이에요.","수평적은 소득이 같아도 욕구(질병 등)가 다른 집단 간 이전이에요. 예) 건강보험","세대간은 젊은 세대 → 노인 세대 이전이에요.","단기적은 현재 욕구를 위해 짧은 기간 안에 이루어지는 재분배예요."]},
+{id:"m2",u:1,q:"젊은 세대가 낸 보험료로 노인 세대의 급여를 지급하는 재분배는?",o:["세대내 재분배","장기적 재분배","세대간 재분배","시장적 재분배"],a:2,w:["세대내는 같은 세대 안에서 소득을 나누는 것이에요.","장기적은 한 사람이 생애 전반에 걸쳐 모아 노후에 받는 거예요.","정답. 젊은 세대 → 노인 세대.","시장적 재분배는 민간이 자발적 동기로 하는 이전(예: 민간보험)이에요."]},
+{id:"m3",u:1,q:"복지급여를 계속 받기 위해 근로를 줄이고 빈곤 상태에 머무르게 되는 역기능은?",o:["도덕적 해이","빈곤함정","역선택","무임승차"],a:1,w:["도덕적 해이는 위험 대비가 되어 있어 예방·주의 노력이 약해지는 것이에요(예: 실업급여).","정답. 일하면 급여가 끊기니 근로동기가 약해져요(예: 공공부조 수급).","역선택은 정보 비대칭 때문에 위험한 사람만 보험에 가입하는 현상이에요.","무임승차는 공공재에서 비용 없이 혜택만 보는 문제예요."]},
+{id:"m4",u:1,q:"정책 선택에 관한 프로그램·계획을 분석해 '무엇이 그 정책을 이루는가'를 보는 분석은?",o:["과정분석","산출분석","성과분석","형성평가"],a:1,w:["과정분석은 정책이 어떤 정치적·사회적 과정을 거쳐 만들어졌는지 봐요.","정답. 누가, 무엇을, 어떻게, 무슨 재원으로 — 산출의 구체적 내용을 봐요.","성과분석은 실행 결과 무엇이 달라졌는지 효과를 봐요.","형성평가는 정책평가 유형이지 3P 분석이 아니에요."]},
+{id:"m5",u:2,q:"결과가 아니라 출발선에서의 기회만 같게 하는, 가장 소극적인 평등은?",o:["수량적 평등","비례적 평등","기회적 평등","결과적 평등"],a:2,w:["수량적 평등은 모두에게 똑같이 나누는 가장 적극적인 평등이에요.","비례적 평등(형평)은 업적·기여·욕구에 따라 다르게 나눠요.","정답. 기회만 주고 결과는 묻지 않아 가장 소극적이에요.","결과적 평등은 수량적 평등에 가까운 개념이에요."]},
+{id:"m6",u:2,q:"개인의 업적이나 기여에 따라 다르게 배분하는 평등으로 '형평'이라고도 하는 것은?",o:["비례적 평등","수량적 평등","기회적 평등","적극적 자유"],a:0,w:["정답. 열등처우의 원칙도 비례적 평등과 연결돼요.","수량적 평등은 기여와 상관없이 똑같이 나눠요.","기회적 평등은 출발선만 맞춰요.","자유의 개념이지 평등의 유형이 아니에요."]},
+{id:"m7",u:2,q:"'무엇인가 할 수 있는 자유'로, 실현을 위해 국가의 적극적 개입이 필요한 자유는?",o:["소극적 자유","적극적 자유","시장의 자유","형식적 자유"],a:1,w:["소극적 자유는 간섭받지 않을 자유로, 자유주의자들이 선호해요.","정답. 복지정책은 소극적 자유를 줄이는 대신 적극적 자유를 늘려요.","필기 범위의 개념이 아니에요.","필기 범위의 개념이 아니에요."]},
+{id:"m8",u:2,q:"정책 목표를 달성하는 자원이 꼭 필요한 사람에게 얼마나 집중되었는지를 뜻하는 효율성은?",o:["운영효율성","목표효율성","파레토 효율","배분적 효율"],a:1,w:["운영효율성은 정책을 운영하는 데 비용(인건비 등)이 얼마나 적게 드는지예요.","정답. 수단적 효율성 중 하나예요.","파레토 효율은 누구에게도 손해 없이는 누구도 더 나아질 수 없는 상태예요.","필기 범위의 용어가 아니에요."]},
+{id:"m9",u:3,q:"국가가 복지를 제공해야 하는 근거 중, 누구나 이용할 수 있고 비용을 안 내도 배제할 수 없는 재화의 성격은?",o:["공공재","외부효과","정보의 비대칭","규모의 경제"],a:0,w:["정답. 비경합성·비배제성 → 무임승차 → 시장 공급이 어려워요.","외부효과는 거래 당사자가 아닌 제3자에게 이익·손해가 생기는 것이에요.","정보 비대칭은 소비자가 충분한 정보를 갖지 못하는 문제예요.","규모의 경제는 대규모 운영으로 비용이 줄어드는 거예요."]},
+{id:"m10",u:3,q:"위험이 높은 사람만 민간보험에 가입해 보험료가 오르고 결국 시장이 무너지는 현상과 그 해결책으로 옳은 것은?",o:["도덕적 해이 – 본인부담금","역선택 – 국가의 강제가입 사회보험","외부효과 – 벌금 부과","빈곤함정 – 근로장려"],a:1,w:["도덕적 해이는 가입 '후' 행동이 달라지는 거예요.","정답. 모두를 강제가입시켜 위험을 분산해요.","외부효과는 제3자에게 미치는 효과예요.","빈곤함정은 역기능이지 시장실패가 아니에요."]},
+{id:"m11",u:3,q:"다음 중 부정적 외부효과의 예와 국가 대응으로 가장 알맞은 것은?",o:["교육 – 국가 지원 확대","공장 오염물질 배출 – 벌금·규제","예방접종 – 무료 제공","의료 정보 부족 – 정보 제공"],a:1,w:["교육은 긍정적 외부효과예요.","정답. 자기 이익을 위해 피해를 주면 벌금으로 조정해요.","예방접종은 긍정적 외부효과예요.","정보 비대칭의 대응이에요."]},
+{id:"m12",u:4,q:"기존 정책을 바탕으로 약간씩 수정·보완하는 결정모형과 그 한계는?",o:["합리모형 – 인간의 이성적 한계","만족모형 – 만족 기준이 불명확","점증모형 – 혁신이 어렵고 보수적","최적모형 – 초합리성의 모호함"],a:2,w:["합리모형 설명은 맞지만 '기존 정책 수정'은 점증모형이에요.","만족모형은 적당히 만족할 만한 대안을 고르는 모형이에요.","정답. 현실을 인정하지만 완전히 새로운 정책을 만들기 어려워요.","최적모형은 합리성+초합리성(직관)을 함께 봐요."]},
+{id:"m13",u:4,q:"기본적 결정은 합리적으로, 세부 결정은 점증적으로 하는 결정모형은?",o:["혼합모형","최적모형","만족모형","쓰레기통 모형"],a:0,w:["정답. 합리+점증. 한계: 절충일 뿐 새롭지 않고 현실 적용이 어려워요.","최적모형은 경제적 합리성에 직관·판단력 같은 초합리성을 더해요.","만족모형은 최선이 아닌 '만족할 만한' 대안을 골라요.","쓰레기통 모형은 세 흐름이 우연히 만나 결정돼요."]},
+{id:"m14",u:4,q:"쓰레기통 모형에서 정책결정이 이루어지는 '흐름'에 해당하지 않는 것은?",o:["문제흐름","정치흐름","해결책(정책)흐름","평가흐름"],a:3,w:["포함돼요. 예) 언론이 제기한 사회문제","포함돼요. 예) 정권교체, 여론","포함돼요. 예) 전문가·연구소의 대안","정답. 세 흐름은 문제·정치·해결책이에요. 조직화된 무질서 속에서 우연히 만나요."]},
+{id:"m15",u:4,q:"정책이 끝난 후 사회에 얼마나 영향을 미쳤는지 효과를 양적으로 측정하는 평가는?",o:["형성평가","과정평가","총괄평가","산출분석"],a:2,w:["형성평가는 진행 중에 개선을 위해 해요.","과정평가는 정책이 계획대로 집행되는지 봐요.","정답. 정책이 다 끝나고 효과를 확인해요.","3P 분석 개념이에요."]},
+{id:"m16",u:5,q:"전문가가 판단해 급여 여부와 수준을 결정하는 대상자 선정 기준은?",o:["귀속적 욕구","보상","진단적 차등","자산조사"],a:2,w:["귀속적 욕구는 특정 집단(노인, 아동 등)에 속하면 받는 기준이에요.","보상은 국가유공자처럼 기여·피해에 대한 보상이에요.","정답. 예) 장애등급 판정","자산조사는 소득·재산으로 증명하는 선별 기준이에요."]},
+{id:"m17",u:5,q:"현금급여의 장점으로 가장 알맞은 것은?",o:["목표효율성이 높다","규모의 경제로 비용이 줄어든다","수급자의 선택권이 보장되고 낙인이 적다","급여가 다른 용도로 쓰일 위험이 없다"],a:2,w:["현물급여의 장점이에요.","현물급여의 장점이에요(대량 구매).","정답. 소비자 주권, 운영비용(행정비용)도 적어요.","현물급여의 장점이에요. 현금은 오용 위험이 있어요."]},
+{id:"m18",u:6,q:"다음 중 역진적 성격이 가장 강한 재원은?",o:["개인소득세","법인세","소비세(부가가치세)","재산세"],a:2,w:["누진세라 재분배 효과가 커요.","기업에 부과돼 직접 역진적이진 않아요.","정답. 소득과 상관없이 똑같이 내 저소득층 부담이 커요.","필기 범위에서 역진세의 대표가 아니에요."]}
+];
+
+const BLANKS=[
+{id:"b1",u:1,s:"사회복지정책의 3가지 기능은 사회통합, ___, 경제성장과 안정이다.",a:["소득재분배","재분배"],c:["소득재분배","빈곤함정","외부효과"]},
+{id:"b2",u:1,s:"정책 분석의 3P는 과정, 산출, ___ 이다.",a:["성과"],c:["성과","평가","결과"]},
+{id:"b3",u:1,s:"산출분석의 4가지 분석틀: 누구에게, 무엇을, 어떻게, ___ 재원으로",a:["무슨","어떤"],c:["무슨","언제","왜"]},
+{id:"b4",u:1,s:"급여를 받기 위해 근로를 줄이는 역기능을 ___ 이라고 한다.",a:["빈곤함정"],c:["빈곤함정","도덕적해이","역선택"]},
+{id:"b5",u:2,s:"간섭받지 않을 자유는 ___ 자유이다.",a:["소극적"],c:["소극적","적극적","형식적"]},
+{id:"b6",u:2,s:"모두에게 동일하게 나누는 가장 적극적인 평등은 ___ 평등이다.",a:["수량적"],c:["수량적","비례적","기회적"]},
+{id:"b7",u:2,s:"전체 사회의 자원을 모두가 행복하도록 배분해 더 이상 개선할 수 없는 상태를 ___ 효율이라 한다.",a:["파레토"],c:["파레토","목표","운영"]},
+{id:"b8",u:3,s:"국가 개입의 근거: 공공재, 외부효과, 정보의 비대칭, 역선택, 도덕적 해이, ___",a:["규모의경제"],c:["규모의 경제","빈곤함정","점증주의"]},
+{id:"b9",u:3,s:"위험한 사람만 보험에 가입하는 ___ 때문에 국가가 사회보험을 강제가입으로 운영한다.",a:["역선택"],c:["역선택","도덕적해이","외부효과"]},
+{id:"b10",u:4,s:"합리모형과 점증모형을 결합한 것은 ___ 모형이다.",a:["혼합"],c:["혼합","최적","만족"]},
+{id:"b11",u:4,s:"합리성에 직관·판단력 같은 초합리성까지 고려하는 것은 ___ 모형이다.",a:["최적"],c:["최적","혼합","쓰레기통"]},
+{id:"b12",u:4,s:"쓰레기통 모형의 세 흐름은 문제흐름, 정치흐름, ___ 흐름이다.",a:["해결책","정책","해결"],c:["해결책","평가","재원"]},
+{id:"b13",u:4,s:"정책 평가 유형 3가지: 총괄평가, 과정평가, ___ 평가",a:["형성"],c:["형성","성과","산출"]},
+{id:"b14",u:5,s:"모든 사람에게 권리로 급여를 주는 원칙은 ___ 주의이다.",a:["보편"],c:["보편","선별","잔여"]},
+{id:"b15",u:5,s:"소득·재산으로 자격을 증명해야 받는 기준은 ___ 이다.",a:["자산조사"],c:["자산조사","진단적 차등","귀속적 욕구"]},
+{id:"b16",u:5,s:"일정 금액 안에서 서비스를 고를 수 있는, 현금과 현물의 중간 형태는 ___ 이다.",a:["바우처","증서"],c:["바우처","기회","세금공제"]},
+{id:"b17",u:6,s:"소득이 많을수록 더 많이 내는 세금은 ___ 세이다.",a:["누진"],c:["누진","역진","목적"]},
+{id:"b18",u:6,s:"특별한 목적을 위해 지출 용도를 정해 걷는 세금을 ___ 세라 하며, 대표적으로 사회보험료가 있다.",a:["목적"],c:["목적","일반","소비"]},
+{id:"b19",u:6,s:"세금을 깎아주는 방식의 재원인 ___ 은 세금을 많이 내는 고소득층에게 유리하다.",a:["조세비용"],c:["조세비용","이용료","기부금"]}
+];
+
+const ESSAYS=[
+{id:"e1",u:1,q:"사회복지정책의 기능 3가지와 역기능 2가지를 설명하시오.",m:"[기능]\n① 사회통합: 사회 구성원이 함께 살아갈 수 있도록 공동체 의식을 높이고, 원조하고 원조받을 수 있는 규칙을 만든다.\n② 소득재분배: 개인·집단 간 소득을 이전한다. 수직적(고소득→저소득), 수평적(같은 소득 내 욕구 차이, 예: 건강보험), 세대간(젊은 세대→노인 세대), 장기적·단기적 재분배 등이 있다.\n③ 경제성장과 안정: 최저 생활 보장으로 생산 경쟁력이 높아지고, 실업급여·공공근로 등으로 경기를 안정시키는 자동안정화 기능을 한다.\n\n[역기능]\n① 빈곤함정: 급여를 받기 위해 근로를 줄이고 빈곤에 머무른다.\n② 도덕적 해이: 위험 대비가 되어 있어 예방 노력이 약해진다(예: 실업급여).",r:["기능 3가지(사회통합·소득재분배·경제성장과 안정)를 모두 썼다","소득재분배 유형을 2개 이상 예시와 함께 썼다","경제 안정(자동안정화) 기능을 설명했다","빈곤함정을 정의했다","도덕적 해이를 예시와 함께 정의했다"]},
+{id:"e2",u:4,q:"정책결정모형 5가지를 설명하고 각각의 한계를 쓰시오.",m:"① 합리모형: 인간은 이성적이라 모든 대안을 검토해 최선의 정책을 고른다. 한계: 인간은 그렇게 이성적이지 않고 시간·비용이 많이 들어 비현실적이다.\n② 만족모형: 최선이 아닌 '만족할 만한' 대안을 고른다. 한계: 어느 정도가 만족인지 기준이 불명확하다.\n③ 점증모형: 기존 정책을 바탕으로 약간씩 수정·보완한다. 한계: 현실은 인정하지만 혁신이 어렵고 보수적이다.\n④ 혼합모형: 합리+점증. 기본 결정은 합리적으로, 세부 결정은 점증적으로 한다. 한계: 두 모형의 절충일 뿐이며 현실 적용이 어렵다.\n⑤ 최적모형: 경제적 합리성에 직관·판단력 같은 초합리성을 더한다. 한계: 초합리성의 개념이 모호하고 구체적인 방법이 없다.",r:["5가지 모형 이름을 모두 썼다","합리·만족 모형의 한계를 썼다","점증모형의 '기존 정책 수정'과 보수성을 썼다","혼합모형을 합리+점증으로 설명했다","최적모형의 초합리성과 그 모호함을 썼다"]},
+{id:"e3",u:3,q:"국가가 사회복지를 제공해야 하는 정당성(시장실패)을 4가지 이상 설명하시오.",m:"① 공공재: 비경합·비배제성 때문에 누구나 이용하고 무임승차가 생겨 시장이 공급하지 않으므로 국가가 제공한다.\n② 외부효과: 거래 당사자가 아닌 제3자에게 이익(긍정적: 교육·예방접종)이나 손해(부정적: 공해)가 생긴다. 긍정적은 국가가 지원하고 부정적은 벌금으로 규제한다.\n③ 정보의 비대칭: 소비자가 충분한 정보가 없어 합리적 선택이 어려우므로 국가가 정보 제공·규제를 한다.\n④ 역선택: 위험한 사람만 보험에 가입해 보험료가 오르고 시장이 무너지므로 국가가 강제가입 사회보험을 운영한다.\n⑤ 도덕적 해이: 가입 후 위험 예방 노력이 줄어든다. 국가가 감시하거나 본인부담으로 통제한다.\n⑥ 규모의 경제: 대규모로 운영하면 비용이 줄어 국가가 하는 편이 효율적이다.",r:["4가지 이상 근거를 나열했다","공공재를 무임승차와 연결했다","외부효과의 긍정/부정을 예시로 구분했다","역선택과 강제가입을 연결했다","도덕적 해이와 역선택의 차이(가입 전/후)가 드러난다"]},
+{id:"e4",u:5,q:"보편주의와 선별주의를 비교하고, 현금급여와 현물급여의 장단점을 쓰시오.",m:"[보편주의 vs 선별주의]\n보편주의: 모든 국민에게 권리로 급여를 준다(예: 건강보험). 낙인이 없고 행정비용이 적으며 사회통합에 좋지만 비용이 많이 든다.\n선별주의: 사회적·신체적·경제적 기준(자산조사 등)으로 필요한 사람만 지원한다(예: 공공부조). 목표효율성은 높지만 낙인이 생기고 자산조사 비용이 든다.\n\n[현금 vs 현물]\n현물: 필요한 재화·서비스를 직접 제공. 목표효율성이 높고 규모의 경제로 대량 구매가 가능하지만, 선택권이 없고 낙인이 생긴다.\n현금: 직접 돈으로 준다. 선택의 자유(소비자 주권)가 있고 낙인이 적으며 운영비용이 적지만, 다른 용도로 쓰일 수 있다.",r:["보편주의를 정의하고 장점(낙인 없음 등)을 썼다","선별주의를 자산조사·낙인과 연결했다","현물급여의 장점(목표효율성·규모의 경제)을 썼다","현금급여의 장점(선택권·낙인↓)을 썼다","각각의 단점을 1개 이상 썼다"]},
+{id:"e5",u:6,q:"사회복지 재원으로서 일반세, 목적세(사회보험료), 조세비용의 재분배 효과를 비교하시오.",m:"① 일반세: 개인소득세, 법인세, 소비세 등. 개인소득세는 누진세라 소득이 많을수록 많이 내어 재분배 효과가 크다. 반면 소비세는 소득과 상관없이 모두 같은 비율로 내 역진적이다.\n② 목적세(사회보험료): 특별한 목적을 위해 지출 용도를 정해 걷는다. 동일 비율 부과 + 소득 상한선 때문에 고소득자의 실질 부담률이 낮아져 역진적일 수 있다.\n③ 조세비용: 세금을 감면해 주는 방식(세금공제 등). 세금을 많이 내는 고소득층에게 유리하고, 세금을 안 내는 저소득층은 혜택이 없어 역진적이다.",r:["개인소득세의 누진성과 재분배 효과를 썼다","소비세의 역진성을 썼다","목적세(사회보험료)의 정의를 썼다","사회보험료 상한선으로 인한 역진성을 썼다","조세비용이 고소득층에 유리한 이유를 썼다"]}
+];
+
+const TERMS=[
+{a:"수직적 재분배",ad:"고소득 → 저소득으로 이전",b:"수평적 재분배",bd:"같은 소득 내, 욕구 차이에 따른 이전 (건강보험)"},
+{a:"세대간 재분배",ad:"젊은 세대 → 노인 세대",b:"세대내 재분배",bd:"같은 세대 안에서 소득을 나눔"},
+{a:"장기적 재분배",ad:"생애 전반에 걸쳐 모아 노후에 받음",b:"단기적 재분배",bd:"현재 욕구 충족을 위한 짧은 기간의 이전"},
+{a:"도덕적 해이",ad:"가입 '후' 예방 노력이 줄어듦",b:"역선택",bd:"가입 '전' 위험한 사람만 가입함"},
+{a:"빈곤함정",ad:"급여 받으려 근로를 줄임",b:"도덕적 해이",bd:"대비가 있어 주의를 덜 함 (실업급여)"},
+{a:"소극적 자유",ad:"간섭받지 않을 자유",b:"적극적 자유",bd:"무언가 할 수 있는 자유, 국가 개입 필요"},
+{a:"수량적 평등",ad:"모두에게 똑같이, 가장 적극적",b:"비례적 평등",bd:"업적·기여에 따라 다르게 (형평)"},
+{a:"기회적 평등",ad:"출발선만 같게, 가장 소극적",b:"수량적 평등",bd:"결과까지 똑같이"},
+{a:"목표효율성",ad:"필요한 사람에게 자원을 집중",b:"운영효율성",bd:"운영 비용(인건비 등)이 적게 듦"},
+{a:"점증모형",ad:"기존 정책을 조금씩 수정",b:"혼합모형",bd:"기본은 합리적, 세부는 점증적"},
+{a:"최적모형",ad:"합리성 + 초합리성(직관)",b:"만족모형",bd:"만족할 만한 대안을 선택"},
+{a:"총괄평가",ad:"정책이 끝난 후 효과를 양적으로",b:"형성평가",bd:"진행 중 개선을 위해"},
+{a:"귀속적 욕구",ad:"특정 집단에 속하면 받음 (노인·아동)",b:"진단적 차등",bd:"전문가 판단으로 결정 (장애 판정)"},
+{a:"보상",ad:"기여·피해에 대한 보상 (국가유공자)",b:"자산조사",bd:"소득·재산으로 증명 (선별주의)"},
+{a:"현금급여",ad:"선택권 보장, 낙인 적음, 오용 위험",b:"현물급여",bd:"목표효율성↑, 규모의 경제, 선택권 없음"},
+{a:"누진세",ad:"많이 벌수록 높은 세율 (소득세)",b:"역진세",bd:"저소득층 부담이 상대적으로 큼 (소비세)"},
+{a:"일반세",ad:"용도를 정하지 않고 걷음",b:"목적세",bd:"특정 목적에만 씀 (사회보험료)"},
+{a:"과정분석",ad:"정책이 만들어진 과정",b:"산출분석",bd:"정책을 이루는 구체적 내용 (누가·무엇을…)"}];
+
+/* ============ 저장 ============ */
+const KEY="jaeheonlingo.v1";
+let S=load();
+function blank(){return{items:{},xp:0,streak:0,last:null,essay:{},daily:{}}}
+function load(){try{const r=localStorage.getItem(KEY);if(r){return Object.assign(blank(),JSON.parse(r))}}catch(e){}return blank()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const today=()=>new Date().toISOString().slice(0,10);
+function touchDay(){const t=today();if(S.last===t)return;const y=new Date(Date.now()-864e5).toISOString().slice(0,10);S.streak=S.last===y?S.streak+1:1;S.last=t}
+function rec(id,ok){const it=S.items[id]||{c:0,w:0,lv:0,lastOk:null,wrongOpen:false};
+ if(ok){it.c++;const t=today();if(it.lv===0)it.lv=1;else if(it.lastOk&&it.lastOk!==t)it.lv=2;else it.lv=Math.max(it.lv,1);it.lastOk=t;if(it.lv>=1&&it.wrongOpen&&it.streak>=1)it.wrongOpen=false;it.streak=(it.streak||0)+1;if(it.streak>=2)it.wrongOpen=false}
+ else{it.w++;it.lv=0;it.streak=0;it.wrongOpen=true}
+ S.items[id]=it;save()}
+const ALL=[...MCQ.map(x=>x.id),...BLANKS.map(x=>x.id),...ESSAYS.map(x=>x.id)];
+function lv(id){return(S.items[id]||{}).lv||0}
+function pct(ids){if(!ids.length)return 0;return Math.round(ids.reduce((s,i)=>s+Math.min(lv(i),2),0)/(ids.length*2)*100)}
+const wrongIds=()=>Object.keys(S.items).filter(k=>S.items[k].wrongOpen&&!k.startsWith("e"));
+
+/* ============ UI 공통 ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),1800)}
+function prof(mood){const mouth=mood==="sad"?"M30 52 q6 -5 12 0":mood==="happy"?"M28 49 q8 8 16 0":"M30 50 h12";
+return`<svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="40" r="26" fill="#f2d3b3"/><path d="M12 34 q2 -22 24 -22 q22 0 24 22 q-6 -10 -12 -10 q-6 4 -12 2 q-6 -2 -12 0 q-8 0 -12 8z" fill="#9aa3a0"/><circle cx="27" cy="40" r="6.5" fill="none" stroke="#2b3a31" stroke-width="2.4"/><circle cx="45" cy="40" r="6.5" fill="none" stroke="#2b3a31" stroke-width="2.4"/><path d="M33.5 40h5" stroke="#2b3a31" stroke-width="2.4"/><circle cx="27" cy="40" r="2" fill="#2b3a31"/><circle cx="45" cy="40" r="2" fill="#2b3a31"/><path d="${mouth}" fill="none" stroke="#7a3b2e" stroke-width="2.4" stroke-linecap="round"/><path d="M28 66 l8 -5 l8 5 l-8 4z" fill="#3a8a5c"/></svg>`}
+function say(t,m){return`<div class="prof">${prof(m)}<div class="bubble">${t}</div></div>`}
+
+/* ============ 홈/탭 ============ */
+let tab="learn";
+const TABS=[["learn","학습"],["wrong","오답노트"],["words","단어장"],["me","기록"]];
+function renderTabs(){$("#tabs").innerHTML=TABS.map(([k,l])=>`<button aria-current="${k===tab}" data-t="${k}">${l}</button>`).join("");$("#tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()})}
+function header(){return`<div class="top"><div class="logo">재헌링고</div><div class="stat fire" title="연속 학습일">🔥 ${S.streak}</div><div class="stat xp" title="경험치">◆ ${S.xp}</div></div>`}
+function render(){renderTabs();const a=$("#app");
+ const w=wrongIds().length;
+ if(tab==="learn"){const p=pct(ALL);
+  const msg=p===0?"사회복지정책론, 오늘부터 한 칸씩 같이 갑시다. 객관식 18문항, 서술형 5문항이에요.":p<100?`지금 숙련도 ${p}%. 하루 지나서 다시 맞혀야 ‘완전 숙련’으로 쳐요.`:"전 범위 완전 숙련! 시험장에서 봅시다.";
+  a.innerHTML=header()+say(msg,p===100?"happy":"")+`
+  <div class="mastery"><div style="display:flex;justify-content:space-between"><b style="font-family:var(--display);font-weight:400;font-size:18px">전체 숙련도</b><span style="font-variant-numeric:tabular-nums">${p}%</span></div><div class="bar"><i style="width:${p}%"></i></div><div class="small">한 번 맞히면 절반, 다음 날 이후 다시 맞히면 완전 숙련으로 계산해요.</div></div>
+  <div class="modes">
+   <button class="mode" data-m="exam"><b>실전 모의고사</b><span class="small">객관식 18문항 한 번에</span></button>
+   <button class="mode" data-m="essay"><b>서술형 5문항</b><span class="small">모범답안 + 채점표</span></button>
+   <button class="mode" data-m="blank"><b>빈칸 복습</b><span class="small">핵심 문장 ${BLANKS.length}개</span></button>
+   <button class="mode" data-m="wrong"><b>오답 다시 풀기</b>${w?`<span class="badge">${w}개 남음</span>`:`<span class="small">오답 없음</span>`}</button>
+  </div>
+  <h2 class="section-title">단원 경로</h2>
+  <div class="path">${UNITS.map(u=>{const ids=unitIds(u.id);const up=pct(ids);return`<div class="node"><button class="disc ${up===100?"done":""}" style="--p:${up}" data-u="${u.id}" aria-label="${u.t} 레슨 시작"><span class="ring" style="--p:${up}"></span>${up===100?"★":["Ⅰ","Ⅱ","Ⅲ","Ⅳ","Ⅴ","Ⅵ"][u.id-1]}</button><b>${u.t}</b><span class="small">${u.s} · ${up}%</span></div>`}).join("")}</div>`;
+  a.querySelectorAll("[data-u]").forEach(b=>b.onclick=()=>startUnit(+b.dataset.u));
+  a.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(m==="exam")startExam();else if(m==="essay")startEssay(0);else if(m==="blank")startLesson(shuffle(BLANKS).map(x=>({t:"blank",d:x})),"빈칸 복습");else startWrong()});
+ }
+ else if(tab==="wrong"){const ids=wrongIds();
+  a.innerHTML=header()+say(ids.length?`틀린 문제 ${ids.length}개. 두 번 연속 맞히면 오답노트에서 빠져요.`:"오답노트가 비었어요. 모의고사로 실력을 확인해 볼까요?",ids.length?"":"happy")+
+  (ids.length?`<button class="btn wide" id="go">오답만 다시 풀기</button><h2 class="section-title">틀린 문제</h2><div class="list">${ids.map(id=>{const m=MCQ.find(x=>x.id===id),b=BLANKS.find(x=>x.id===id),it=S.items[id];
+   if(m)return`<div class="card"><span class="tag w">객관식 · 틀림 ${it.w}회</span><p style="margin:6px 0"><b>${esc(m.q)}</b></p><p style="margin:0">정답: <b style="color:var(--green)">${esc(m.o[m.a])}</b></p><p class="small" style="margin:4px 0 0">${esc(m.w[m.a])}</p></div>`;
+   return`<div class="card"><span class="tag w">빈칸 · 틀림 ${it.w}회</span><p style="margin:6px 0">${esc(b.s).replace("___",`<b style="color:var(--green)">${esc(b.a[0])}</b>`)}</p></div>`}).join("")}</div>`:"");
+  const g=$("#go");if(g)g.onclick=startWrong;
+ }
+ else if(tab==="words"){
+  a.innerHTML=header()+say("시험에서 제일 많이 틀리는 건 비슷한 단어끼리 헷갈릴 때예요. 짝지어서 외웁시다.")+`<button class="btn wide" id="mg">헷갈리는 단어 짝맞추기</button><h2 class="section-title">헷갈리는 단어 ${TERMS.length}쌍</h2><div class="list">${TERMS.map(t=>`<div class="card pair"><div><b>${t.a}</b>${t.ad}</div><div><b>${t.b}</b>${t.bd}</div></div>`).join("")}</div>`;
+  $("#mg").onclick=startMatch;
+ }
+ else{const done=ALL.filter(i=>lv(i)===2).length,half=ALL.filter(i=>lv(i)===1).length;
+  a.innerHTML=header()+say("학습 기록은 이 브라우저에 자동 저장돼요. 다른 기기로 옮기려면 백업 코드를 복사해 붙여넣으세요.")+`
+  <div class="mastery"><div>완전 숙련 <b>${done}</b> · 한 번 맞힘 <b>${half}</b> · 아직 <b>${ALL.length-done-half}</b> <span class="small">(전체 ${ALL.length}개)</span></div>
+  ${UNITS.map(u=>{const p=pct(unitIds(u.id));return`<div><div style="display:flex;justify-content:space-between"><span>${u.t}</span><span>${p}%</span></div><div class="bar"><i style="width:${p}%"></i></div></div>`}).join("")}</div>
+  <div class="card" style="display:grid;gap:10px"><b style="font-family:var(--display);font-weight:400;font-size:18px">백업 · 불러오기</b>
+  <textarea id="bk" style="min-height:90px" aria-label="백업 코드"></textarea>
+  <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" id="cp">백업 코드 복사</button><button class="btn ghost" id="ld">붙여넣은 코드 불러오기</button><button class="btn ghost" id="rs">기록 초기화</button></div><span class="small" id="rsmsg"></span></div>`;
+  const bk=$("#bk");bk.value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+  $("#cp").onclick=()=>{navigator.clipboard.writeText(bk.value).then(()=>toast("복사했어요")).catch(()=>{bk.select();toast("선택된 코드를 직접 복사하세요")})};
+  $("#ld").onclick=()=>{try{S=Object.assign(blank(),JSON.parse(decodeURIComponent(escape(atob(bk.value.trim())))));save();toast("불러왔어요");render()}catch(e){toast("코드가 올바르지 않아요")}};
+  let arm=false;$("#rs").onclick=()=>{if(!arm){arm=true;$("#rsmsg").textContent="한 번 더 누르면 모든 기록이 지워져요.";return}S=blank();save();toast("초기화했어요");render()};
+ }
+}
+function unitIds(u){return[...MCQ.filter(x=>x.u===u),...BLANKS.filter(x=>x.u===u),...ESSAYS.filter(x=>x.u===u)].map(x=>x.id)}
+
+/* ============ 레슨 엔진 ============ */
+let L=null;
+function startUnit(u){const items=[...MCQ.filter(x=>x.u===u).map(d=>({t:"mcq",d})),...BLANKS.filter(x=>x.u===u).map(d=>({t:"blank",d}))];startLesson(shuffle(items),UNITS[u-1].t)}
+function startExam(){startLesson(MCQ.map(d=>({t:"mcq",d})),"실전 모의고사",true)}
+function startWrong(){const ids=wrongIds();if(!ids.length){toast("오답이 없어요");return}startLesson(shuffle(ids.map(id=>{const m=MCQ.find(x=>x.id===id);return m?{t:"mcq",d:m}:{t:"blank",d:BLANKS.find(x=>x.id===id)}})),"오답 다시 풀기")}
+function startLesson(q,title,exam){L={q,i:0,total:q.length,title,exam,right:0,firstWrong:new Set(),hearts:5,answered:false};$("#lesson").hidden=false;document.body.style.overflow="hidden";draw()}
+function close(){$("#lesson").hidden=true;document.body.style.overflow="";L=null;render()}
+function draw(){const el=$("#lesson");if(L.i>=L.q.length)return finish();
+ const it=L.q[L.i],prog=Math.round(Math.min(L.i,L.total)/L.total*100);
+ let body="";
+ if(it.t==="mcq"){const d=it.d;it.order=it.order||shuffle([0,1,2,3]);
+  body=`<div class="qtype">객관식 · ${UNITS[d.u-1].t}</div>`+say(`<div class="qtext" style="margin:0">${esc(d.q)}</div>`)+`<div class="opts">${it.order.map((oi,k)=>`<button class="opt" data-o="${oi}"><span class="k">${k+1}</span><span>${esc(d.o[oi])}<span class="why" hidden>${esc(d.w[oi])}</span></span></button>`).join("")}</div>`}
+ else{const d=it.d;const typed=!!it.typed;
+  body=`<div class="qtype">빈칸 채우기 · ${UNITS[d.u-1].t}</div>`+say(typed?"이번엔 보기 없이 직접 써 보세요.":"빈칸에 들어갈 말을 고르세요.")+`<p class="qtext">${esc(d.s).replace("___",'<span class="blank" id="bl">&nbsp;</span>')}</p>`+
+  (typed?`<input class="answer-in" id="ans" placeholder="정답 입력" autocomplete="off">`:`<div class="chips">${shuffle(d.c).map(c=>`<button class="chip" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>`)}
+ el.innerHTML=`<div class="lhead"><button class="x" id="cl" aria-label="그만하기">✕</button><div class="bar"><i style="width:${prog}%"></i></div>${L.exam?"":`<span class="hearts">♥ ${L.hearts}</span>`}</div><div class="wrap">${body}</div>
+ <div class="foot" id="ft"><div class="in"><div class="fb" id="fb"></div><button class="btn wide" id="chk" disabled>확인</button></div></div>`;
+ $("#cl").onclick=close;L.answered=false;let pick=null;
+ el.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(L.answered)return;el.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");pick=+b.dataset.o;$("#chk").disabled=false});
+ el.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{if(L.answered)return;el.querySelectorAll(".chip").forEach(x=>x.style.borderColor="");b.style.borderColor="var(--blue)";pick=b.dataset.c;$("#bl").textContent=pick;$("#chk").disabled=false});
+ const ans=$("#ans");if(ans){ans.focus();ans.oninput=()=>{pick=ans.value;$("#chk").disabled=!ans.value.trim()};ans.onkeydown=e=>{if(e.key==="Enter"&&!$("#chk").disabled)$("#chk").click()}}
+ document.onkeydown=e=>{if(it.t==="mcq"&&!L.answered&&/^[1-4]$/.test(e.key)){el.querySelectorAll(".opt")[+e.key-1].click()}};
+ $("#chk").onclick=()=>{if(!L.answered)check(it,pick);else{L.i++;draw()}};
+}
+const norm=s=>String(s).replace(/\s|’|'|‘/g,"").toLowerCase();
+function check(it,pick){L.answered=true;const el=$("#lesson");let ok,fb;
+ if(it.t==="mcq"){const d=it.d;ok=pick===d.a;
+  el.querySelectorAll(".opt").forEach(b=>{const o=+b.dataset.o;b.querySelector(".why").hidden=false;if(o===d.a)b.classList.add("right");else if(o===pick)b.classList.add("wrong")});
+  fb=ok?`<h3>정답이에요!</h3><p>${esc(d.w[d.a])}</p>`:`<h3>아쉬워요</h3><p>정답: <b>${esc(d.o[d.a])}</b> — 선택지마다 해설을 확인해 보세요.</p>`}
+ else{const d=it.d;ok=d.a.some(a=>norm(a)===norm(pick));$("#bl").textContent=pick;
+  fb=ok?`<h3>정답이에요!</h3><p>${esc(d.s.replace("___",d.a[0]))}</p>`:`<h3>아쉬워요</h3><p>정답: <b>${esc(d.a[0])}</b></p>`;
+  if(ok&&!it.typed&&!L.exam){L.q.push({t:"blank",d,typed:true});L.total++}}
+ rec(it.d.id,ok);
+ if(ok){L.right++;S.xp+=10}else{L.firstWrong.add(it.d.id);if(!L.exam){L.hearts=Math.max(0,L.hearts-1);L.q.push({t:it.t,d:it.d,typed:it.typed});L.total++}}
+ touchDay();save();
+ $("#ft").className="foot "+(ok?"ok":"no");$("#fb").innerHTML=fb;$("#fb").classList.add("pop");
+ const c=$("#chk");c.textContent="계속";c.disabled=false;if(!ok)c.classList.add("red");c.focus();
+}
+function finish(){document.onkeydown=null;const el=$("#lesson");const n=L.exam?MCQ.length:L.total,score=L.exam?L.right:null;
+ const wrongList=[...L.firstWrong].map(id=>MCQ.find(x=>x.id===id)||BLANKS.find(x=>x.id===id));
+ const msg=L.exam?(score===18?"만점! 이대로만 하면 됩니다.":score>=14?"좋아요. 틀린 것만 잡으면 만점이에요.":"괜찮아요. 오답노트로 한 번 더 돌려봅시다."):(L.firstWrong.size?"틀린 문제는 끝에서 다시 나왔죠. 내일 한 번 더 보면 완전히 내 것이 돼요.":"한 번도 안 틀렸어요! 내일 다시 맞히면 완전 숙련이에요.");
+ el.innerHTML=`<div class="wrap done-screen">${prof("happy").replace("<svg",'<svg style="width:120px;height:120px"')}<h2>${esc(L.title)} 완료</h2><div class="big">${L.exam?`${score} / 18`:`+${L.right*10} XP`}</div>${say(msg,"happy")}
+ ${wrongList.length?`<div class="card" style="text-align:left;width:100%"><b>이번에 틀린 문제 (오답노트에 저장됨)</b><ul style="margin:6px 0 0;padding-left:20px">${wrongList.map(d=>`<li>${esc(d.q||d.s)}</li>`).join("")}</ul></div>`:""}
+ <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">${wrongList.length?`<button class="btn" id="rw">오답 바로 풀기</button>`:""}<button class="btn ghost" id="hm">홈으로</button></div></div>`;
+ $("#hm").onclick=close;const rw=$("#rw");if(rw)rw.onclick=()=>{startWrong()};
+}
+
+/* ============ 서술형 ============ */
+function startEssay(i){$("#lesson").hidden=false;document.body.style.overflow="hidden";const e=ESSAYS[i],st=S.essay[e.id]||{draft:"",chk:[]};
+ const el=$("#lesson");
+ el.innerHTML=`<div class="lhead"><button class="x" id="cl" aria-label="닫기">✕</button><div class="bar"><i style="width:${i/5*100}%"></i></div><span class="small">${i+1}/5</span></div><div class="wrap">
+ <div class="qtype">서술형 ${i+1} · ${UNITS[e.u-1].t}</div>${say(`<b>${esc(e.q)}</b>`)}
+ <textarea id="dr" placeholder="먼저 보지 말고 직접 써 보세요. 자동 저장돼요.">${esc(st.draft)}</textarea>
+ <div id="rv"></div></div>
+ <div class="foot"><div class="in" style="grid-template-columns:1fr 1fr"><button class="btn ghost" id="pv" ${i===0?"disabled":""}>이전</button><button class="btn" id="sh">모범답안 보기</button></div></div>`;
+ $("#cl").onclick=()=>{$("#lesson").hidden=true;document.body.style.overflow="";render()};
+ $("#dr").oninput=ev=>{st.draft=ev.target.value;S.essay[e.id]=st;save()};
+ $("#pv").onclick=()=>startEssay(i-1);
+ const show=()=>{$("#rv").innerHTML=`<div class="model"><b>모범답안</b>\n${esc(e.m)}</div><h3 style="margin-top:16px">채점표 · 내 답안에 있으면 체크</h3><div class="rub">${e.r.map((r,k)=>`<label><input type="checkbox" data-k="${k}" ${st.chk.includes(k)?"checked":""}><span>${esc(r)}</span></label>`).join("")}</div><p class="small" id="sc"></p>`;
+  const upd=()=>{const n=st.chk.length;$("#sc").textContent=`${n} / ${e.r.length} 충족 · 전부 체크해야 숙련으로 기록돼요.`};upd();
+  $("#rv").querySelectorAll("input").forEach(c=>c.onchange=()=>{const k=+c.dataset.k;st.chk=c.checked?[...new Set([...st.chk,k])]:st.chk.filter(x=>x!==k);S.essay[e.id]=st;save();upd()});
+  const sh=$("#sh");sh.textContent=i<4?"채점 완료 · 다음":"채점 완료";sh.onclick=()=>{const full=st.chk.length===e.r.length;rec(e.id,full);if(full)S.xp+=30;touchDay();save();toast(full?"완벽해요! +30 XP":"빠진 항목을 다시 써 보세요");if(i<4)startEssay(i+1);else{$("#lesson").hidden=true;document.body.style.overflow="";render()}}};
+ $("#sh").onclick=show;
+}
+
+/* ============ 단어 짝맞추기 ============ */
+function startMatch(){const pick=shuffle(TERMS).slice(0,5);const left=[],right=[];pick.forEach((t,i)=>{const useA=Math.random()<.5;left.push({k:i,v:useA?t.a:t.b});right.push({k:i,v:useA?t.ad:t.bd})});
+ const R=shuffle(right),el=$("#lesson");el.hidden=false;document.body.style.overflow="hidden";let sel=null,done=0,miss=0;
+ el.innerHTML=`<div class="lhead"><button class="x" id="cl" aria-label="닫기">✕</button><div class="bar"><i id="mb" style="width:0"></i></div></div><div class="wrap"><div class="qtype">헷갈리는 단어</div>${say("용어와 뜻을 짝지어 보세요. 비슷한 짝이 섞여 있어요.")}<div class="match"><div class="opts">${left.map(x=>`<button class="opt" data-s="L" data-k="${x.k}">${esc(x.v)}</button>`).join("")}</div><div class="opts">${R.map(x=>`<button class="opt" data-s="R" data-k="${x.k}">${esc(x.v)}</button>`).join("")}</div></div></div>`;
+ $("#cl").onclick=()=>{el.hidden=true;document.body.style.overflow="";render()};
+ el.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.disabled)return;if(!sel||sel.dataset.s===b.dataset.s){el.querySelectorAll(".opt.sel").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");sel=b;return}
+  if(sel.dataset.k===b.dataset.k){[sel,b].forEach(x=>{x.classList.remove("sel");x.classList.add("right");x.disabled=true});done++;$("#mb").style.width=done*20+"%";
+   if(done===5){S.xp+=15;touchDay();save();setTimeout(()=>{toast(miss?`완료! 실수 ${miss}번`:"완벽해요! +15 XP");startMatch()},600)}}
+  else{miss++;[sel,b].forEach(x=>{x.classList.add("wrong");setTimeout(()=>x.classList.remove("wrong","sel"),500)})}sel=null});
+}
+
+render();
+</script>
+</body>
+</html>
