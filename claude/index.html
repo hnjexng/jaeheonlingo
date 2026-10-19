@@ -18,6 +18,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141b16;--card:#1d2620;--ink:#e6eee7;--muted:#9aaa9f;--line:#2f3b33;--green:#4fae78;--green-d:#3a8a5c;--green-l:#22392b;--red:#e5716b;--red-l:#3d2321;--gold:#efb94a;--gold-l:#3a2f17;--blue:#78a6d8;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#141b16;--card:#1d2620;--ink:#e6eee7;--muted:#9aaa9f;--line:#2f3b33;--green:#4fae78;--green-d:#3a8a5c;--green-l:#22392b;--red:#e5716b;--red-l:#3d2321;--gold:#efb94a;--gold-l:#3a2f17;--blue:#78a6d8;color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:90px}
 h1,h2,h3{font-family:var(--display);font-weight:400;text-wrap:balance;margin:0}
 button{font:inherit;color:inherit;cursor:pointer}
@@ -391,7 +392,7 @@ function draw(){const el=$("#lesson");if(L.i>=L.q.length)return finish();
  const it=L.q[L.i],prog=Math.round(Math.min(L.i,L.total)/L.total*100);
  let body="";
  if(it.t==="mcq"){const d=it.d;it.order=it.order||shuffle([0,1,2,3]);
-  body=`<div class="qtype">객관식 · ${UNITS[d.u-1].t}${d.lv?' · <span class="tag w">심화</span>':''}</div>`+say(`<div class="qtext" style="margin:0">${esc(d.q)}</div>`)+`<div class="opts">${it.order.map((oi,k)=>`<button class="opt" data-o="${oi}"><span class="k">${k+1}</span><span>${esc(d.o[oi])}<span class="why" hidden>${esc(d.w[oi])}</span></span></button>`).join("")}</div>`}
+  body=`<div class="qtype">객관식 · ${UNITS[d.u-1].t}${d.lv?' · <span class="tag w">심화</span>':''}</div>`+say(`<div class="qtext" style="margin:0">${esc(d.q)}</div>`)+`<div class="opts">${it.order.map((oi,k)=>`<button class="opt" data-o="${oi}"><span class="k">${k+1}</span><span>${esc(d.o[oi])}</span></button>`).join("")}</div>`}
  else{const d=it.d;const typed=!!it.typed;
   body=`<div class="qtype">빈칸 채우기 · ${UNITS[d.u-1].t}</div>`+say(typed?"이번엔 보기 없이 직접 써 보세요.":"빈칸에 들어갈 말을 고르세요.")+`<p class="qtext">${esc(d.s).replace("___",'<span class="blank" id="bl">&nbsp;</span>')}</p>`+
   (typed?`<input class="answer-in" id="ans" placeholder="정답 입력" autocomplete="off">`:`<div class="chips">${shuffle(d.c).map(c=>`<button class="chip" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>`)}
@@ -407,8 +408,8 @@ function draw(){const el=$("#lesson");if(L.i>=L.q.length)return finish();
 const norm=s=>String(s).replace(/\s|’|'|‘/g,"").toLowerCase();
 function check(it,pick){L.answered=true;const el=$("#lesson");let ok,fb;
  if(it.t==="mcq"){const d=it.d;ok=pick===d.a;
-  el.querySelectorAll(".opt").forEach(b=>{const o=+b.dataset.o;b.querySelector(".why").hidden=false;if(o===d.a)b.classList.add("right");else if(o===pick)b.classList.add("wrong")});
-  fb=ok?`<h3>정답이에요!</h3><p>${esc(d.w[d.a])}</p>`:`<h3>아쉬워요</h3><p>정답: <b>${esc(d.o[d.a])}</b> — 선택지마다 해설을 확인해 보세요.</p>`}
+  el.querySelectorAll(".opt").forEach(b=>{const o=+b.dataset.o;if(o===d.a)b.classList.add("right");else if(o===pick)b.classList.add("wrong")});
+  fb=ok?`<h3>정답이에요!</h3><p>${esc(d.w[d.a])}</p>`:`<h3>아쉬워요</h3><p>정답: <b>${esc(d.o[d.a])}</b></p><p>${esc(d.w[d.a])}</p>`}
  else{const d=it.d;ok=d.a.some(a=>norm(a)===norm(pick));$("#bl").textContent=pick;
   fb=ok?`<h3>정답이에요!</h3><p>${esc(d.s.replace("___",d.a[0]))}</p>`:`<h3>아쉬워요</h3><p>정답: <b>${esc(d.a[0])}</b></p>`;
   if(ok&&!it.typed&&!L.exam){L.q.push({t:"blank",d,typed:true});L.total++}}
